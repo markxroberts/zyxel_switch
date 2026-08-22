@@ -1,0 +1,136 @@
+{
+  "title": "Zyxel Switch",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add a Zyxel switch",
+        "description": "Connect to a supported Zyxel GS1200 or GS1900 switch. GS1900 monitoring requires read-only SNMPv2c access.",
+        "data": {
+          "host": "Host",
+          "port": "Web interface port",
+          "username": "Username",
+          "password": "Password",
+          "family": "Switch family",
+          "use_https": "Use HTTPS",
+          "verify_ssl": "Verify HTTPS certificate",
+          "snmp_community": "SNMPv2c community",
+          "snmp_port": "SNMP port"
+        },
+        "data_description": {
+          "host": "IP address or hostname. A complete http:// or https:// URL is also accepted.",
+          "password": "The web-interface password.",
+          "snmp_community": "Required for GS1900 monitoring. Leave blank for GS1200."
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Zyxel switch",
+        "description": "Update the management address, protocol or credentials. Leave secret fields blank to keep their existing values.",
+        "data": {
+          "host": "Host",
+          "port": "Web interface port",
+          "username": "Username",
+          "password": "Password",
+          "family": "Switch family",
+          "use_https": "Use HTTPS",
+          "verify_ssl": "Verify HTTPS certificate",
+          "snmp_community": "SNMPv2c community",
+          "snmp_port": "SNMP port"
+        },
+        "data_description": {
+          "password": "Leave blank to keep the stored password.",
+          "snmp_community": "Leave blank to keep the stored community."
+        }
+      },
+      "reauth_confirm": {
+        "title": "Reauthenticate Zyxel switch",
+        "description": "Enter replacement web-interface credentials. Leave the password blank to retain the stored password.",
+        "data": {
+          "username": "Username",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the switch.",
+      "invalid_auth": "The switch rejected the supplied credentials.",
+      "session_busy": "The switch web interface is already in use. Log out of other browser sessions and try again.",
+      "unsupported": "The device did not identify as a supported Zyxel GS1200 or GS1900 switch.",
+      "unknown": "An unexpected error occurred. Check the Home Assistant log for details."
+    },
+    "abort": {
+      "already_configured": "This switch is already configured.",
+      "wrong_device": "The replacement address belongs to a different physical switch.",
+      "reconfigure_successful": "The switch configuration was updated.",
+      "reauth_successful": "The switch credentials were updated."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Zyxel Switch options",
+        "description": "Choose how frequently Home Assistant polls the switch.",
+        "data": {
+          "poll_interval": "Polling interval"
+        },
+        "data_description": {
+          "poll_interval": "Seconds between updates (30–300)."
+        }
+      }
+    }
+  },
+  "selector": {
+    "family": {
+      "options": {
+        "auto": "Automatic detection",
+        "gs1200": "GS1200",
+        "gs1900": "GS1900"
+      }
+    }
+  },
+  "entity": {
+    "binary_sensor": {
+      "port_link": {
+        "name": "Link"
+      }
+    },
+    "sensor": {
+      "port_speed": {
+        "name": "Speed"
+      },
+      "port_poe_power": {
+        "name": "PoE power"
+      },
+      "port_rx_bytes": {
+        "name": "Received bytes"
+      },
+      "port_tx_bytes": {
+        "name": "Transmitted bytes"
+      },
+      "uptime": {
+        "name": "Uptime"
+      },
+      "poe_total_power": {
+        "name": "PoE consumption"
+      },
+      "poe_budget": {
+        "name": "PoE budget"
+      },
+      "poe_threshold": {
+        "name": "PoE threshold"
+      }
+    },
+    "switch": {
+      "port_poe": {
+        "name": "PoE"
+      },
+      "led_eco": {
+        "name": "LED Eco"
+      }
+    }
+  },
+  "exceptions": {
+    "action_failed": {
+      "message": "The switch rejected the requested change: {error}"
+    }
+  }
+}

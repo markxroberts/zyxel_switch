@@ -1,0 +1,15 @@
+{
+  "entity": {
+    "switch": {
+      "port_poe": {
+        "default": "mdi:ethernet",
+        "state": {
+          "off": "mdi:ethernet-off"
+        }
+      },
+      "led_eco": {
+        "default": "mdi:led-outline"
+      }
+    }
+  }
+}

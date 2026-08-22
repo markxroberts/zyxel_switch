@@ -1,0 +1,17 @@
+{
+  "domain": "zyxel_switch",
+  "name": "Zyxel Switch",
+  "version": "0.2.3",
+  "config_flow": true,
+  "codeowners": [],
+  "dependencies": [],
+  "requirements": [
+    "beautifulsoup4==4.13.3",
+    "pysnmp==7.1.27"
+  ],
+  "iot_class": "local_polling",
+  "loggers": [
+    "bs4",
+    "pysnmp"
+  ]
+}

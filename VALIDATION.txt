@@ -1,0 +1,17 @@
+Zyxel Switch 0.2.3 validation
+==============================
+
+Validation performed on 2026-08-07:
+
+- Python byte-compilation: passed
+- JSON parsing: passed
+- Architecture, migration, parser and icon tests: 16 passed
+- SNMP source guard: passed; no ObjectType/ObjectIdentity request varbinds
+- SNMP walk guard: passed; bulk_cmd used with raw numeric OIDs and lookupMib=False
+- No direct integration open() calls: passed
+- Entity unique-ID and registry migration code unchanged from 0.2.2
+
+The release has not been tested against physical Zyxel hardware in this build
+environment. Version 0.2.3 changes the GS1900 SNMP request construction to avoid
+PySNMP runtime MIB-file loading on Home Assistant's event loop. GS1200 network
+communication and all entity identity/migration behaviour are unchanged.
