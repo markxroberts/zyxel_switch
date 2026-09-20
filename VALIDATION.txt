@@ -1,17 +1,25 @@
-Zyxel Switch 0.2.3 validation
-==============================
+Zyxel Switch 0.2.4 validation
+=============================
 
-Validation performed on 2026-08-07:
+Automated tests: PASS (19 tests)
+Python compilation: PASS
+JSON validation: PASS
+manifest.json version/dependencies/requirements checks: PASS
+Modern ConfigEntry/DataUpdateCoordinator architecture guard: PASS
+Legacy platform setup guard: PASS
+Synchronous HTTP library guard: PASS
+HTTP transport aiohttp guard: PASS
+PySNMP runtime MIB-object guard: PASS
+SNMP SET-operation guard: PASS
+Raw numeric OID / lookupMib=False guard: PASS
+Stable MAC device-identity migration guard: PASS
+GS1900 POWER-ETHERNET-MIB summary scalar guard: PASS
+Archive integrity: PASS
+No __pycache__ or .pyc files packaged: PASS
 
-- Python byte-compilation: passed
-- JSON parsing: passed
-- Architecture, migration, parser and icon tests: 16 passed
-- SNMP source guard: passed; no ObjectType/ObjectIdentity request varbinds
-- SNMP walk guard: passed; bulk_cmd used with raw numeric OIDs and lookupMib=False
-- No direct integration open() calls: passed
-- Entity unique-ID and registry migration code unchanged from 0.2.2
-
-The release has not been tested against physical Zyxel hardware in this build
-environment. Version 0.2.3 changes the GS1900 SNMP request construction to avoid
-PySNMP runtime MIB-file loading on Home Assistant's event loop. GS1200 network
-communication and all entity identity/migration behaviour are unchanged.
+Hardware status
+---------------
+This build has not been exercised by the automated test environment against
+physical GS1200 or GS1900 hardware. It is intended as an in-place upgrade from
+0.2.3; do not delete existing device or entity registry entries before the
+first Home Assistant restart, because the startup migration reconciles them.

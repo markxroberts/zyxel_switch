@@ -1,6 +1,6 @@
 # Zyxel Switch for Home Assistant
 
-Version **0.2.3** is based on the architectural rewrite of the 0.1.10 test release for Home Assistant 2026.7 or later.
+Version **0.2.4** is based on the architectural rewrite of the 0.1.10 test release for Home Assistant 2026.7 or later.
 
 ## Supported hardware
 
@@ -86,4 +86,4 @@ Do not include passwords, SNMP communities or cookie values in issue reports.
 
 ## Validation status
 
-The 0.2.3 archive has been syntax-checked, JSON-validated, architecture-checked and exercised with parser unit tests. It cannot be hardware-tested in this build environment, so testing on the listed GS1200 and GS1900 switches remains necessary.
+The 0.2.4 archive has been syntax-checked, JSON-validated, architecture-checked and exercised with parser unit tests. It cannot be hardware-tested in this build environment, so testing on the listed GS1200 and GS1900 switches remains necessary.

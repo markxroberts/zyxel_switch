@@ -41,6 +41,7 @@ from .const import (
     PLATFORMS,
 )
 from .coordinator import ZyxelSwitchCoordinator
+from .entity import _physical_device_id
 from .entity_migration import entry_matches_expected, expected_entities
 from .runtime_data import ZyxelRuntimeData
 from .session_store import ZyxelSessionStore
@@ -133,6 +134,7 @@ async def async_setup_entry(
     entry.runtime_data = ZyxelRuntimeData(client, coordinator, session_store)
 
     await _async_migrate_entity_registry(hass, entry, coordinator)
+    await _async_migrate_device_registry(hass, entry, coordinator)
     await _async_cleanup_non_poe_registry_entries(hass, entry, coordinator)
     entry.async_on_unload(entry.add_update_listener(_async_reload_entry))
 
@@ -299,6 +301,90 @@ async def _async_migrate_entity_registry(
             entry.title,
             migrated,
             removed,
+        )
+
+
+async def _async_migrate_device_registry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    coordinator: ZyxelSwitchCoordinator,
+) -> None:
+    """Restore the 0.1.x MAC device identity and merge 0.2.x duplicates.
+
+    Version 0.2.0 changed the DeviceInfo identifier to the config-entry ID.
+    If GS1900 MAC discovery was temporarily unavailable, Home Assistant could not
+    match that new identifier back to the existing MAC-identified device and a
+    second device registry record was created. Preserve the oldest physical-device
+    record, reattach registry entities to it, then remove only the duplicate.
+    """
+    physical_id = _physical_device_id(entry, coordinator.data.mac)
+    if physical_id is None:
+        return
+
+    registry = dr.async_get(hass)
+    devices = dr.async_entries_for_config_entry(registry, entry.entry_id)
+    if not devices:
+        return
+
+    physical_identifier = (DOMAIN, physical_id)
+    mac_connection = (dr.CONNECTION_NETWORK_MAC, physical_id)
+
+    physical_candidates = [
+        device
+        for device in devices
+        if physical_identifier in device.identifiers
+        or mac_connection in device.connections
+    ]
+    if physical_candidates:
+        canonical = min(
+            physical_candidates,
+            key=lambda device: (device.created_at, device.id),
+        )
+    else:
+        canonical = min(devices, key=lambda device: (device.created_at, device.id))
+
+    duplicates = [device for device in devices if device.id != canonical.id]
+    moved = 0
+    if duplicates:
+        entity_registry = er.async_get(hass)
+        duplicate_ids = {device.id for device in duplicates}
+        for registry_entry in er.async_entries_for_config_entry(
+            entity_registry, entry.entry_id
+        ):
+            if registry_entry.device_id not in duplicate_ids:
+                continue
+            entity_registry.async_update_entity(
+                registry_entry.entity_id,
+                device_id=canonical.id,
+            )
+            moved += 1
+
+        # Remove conflicting 0.2.x device keys before retargeting the retained
+        # record, avoiding identifier/connection collision checks in HA's registry.
+        for duplicate in duplicates:
+            registry.async_remove_device(duplicate.id)
+
+    # Retarget the canonical record to the stable hardware identity captured in
+    # the config entry (the 0.1.x MAC for upgraded installations).
+    if (
+        canonical.identifiers != {physical_identifier}
+        or mac_connection not in canonical.connections
+    ):
+        registry.async_update_device(
+            canonical.id,
+            new_identifiers={physical_identifier},
+            merge_connections={mac_connection},
+        )
+
+    if duplicates:
+        _LOGGER.info(
+            "Reconciled Zyxel device registry for %s: kept %s, removed %d "
+            "duplicate device(s), moved %d entity registry entr%s",
+            entry.title,
+            canonical.id,
+            len(duplicates),
+            moved,
+            "y" if moved == 1 else "ies",
         )
 
 

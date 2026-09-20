@@ -10,7 +10,7 @@ from homeassistant.const import Platform
 DOMAIN: Final = "zyxel_switch"
 NAME: Final = "Zyxel Switch"
 MANUFACTURER: Final = "Zyxel"
-VERSION: Final = "0.2.3"
+VERSION: Final = "0.2.4"
 
 PLATFORMS: Final = (Platform.BINARY_SENSOR, Platform.SENSOR, Platform.SWITCH)
 

@@ -1,7 +1,7 @@
 {
   "domain": "zyxel_switch",
   "name": "Zyxel Switch",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "config_flow": true,
   "codeowners": [],
   "dependencies": [],

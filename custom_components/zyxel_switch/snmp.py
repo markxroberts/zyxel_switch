@@ -16,7 +16,7 @@ from pysnmp.hlapi.v1arch.asyncio import (
     get_cmd,
 )
 from pysnmp.proto.rfc1902 import Null
-from pysnmp.proto.rfc1905 import EndOfMibView
+from pysnmp.proto.rfc1905 import EndOfMibView, NoSuchInstance, NoSuchObject
 
 from .exceptions import ZyxelSnmpError
 from .parsers import normalise_speed, parse_int
@@ -27,6 +27,11 @@ OID_SYS_DESCR = "1.3.6.1.2.1.1.1.0"
 OID_SYS_UPTIME = "1.3.6.1.2.1.1.3.0"
 OID_SYS_NAME = "1.3.6.1.2.1.1.5.0"
 OID_BRIDGE_MAC = "1.3.6.1.2.1.17.1.1.0"
+
+# POWER-ETHERNET-MIB main PSE group. These are read-only on GS1900.
+OID_PETH_MAIN_PSE_POWER = "1.3.6.1.2.1.105.1.3.1.1.2.1"
+OID_PETH_MAIN_PSE_CONSUMPTION = "1.3.6.1.2.1.105.1.3.1.1.4.1"
+OID_PETH_MAIN_PSE_THRESHOLD = "1.3.6.1.2.1.105.1.3.1.1.5.1"
 
 OID_IF_DESCR = "1.3.6.1.2.1.2.2.1.2"
 OID_IF_TYPE = "1.3.6.1.2.1.2.2.1.3"
@@ -78,6 +83,9 @@ class SnmpSwitchData:
     firmware: str | None
     mac: str | None
     uptime_seconds: int | None
+    poe_budget_w: float | None
+    poe_consumption_w: float | None
+    poe_threshold_percent: float | None
     ports: dict[int, SnmpPortData]
 
 
@@ -102,6 +110,15 @@ def _normalise_mac(value: Any) -> str | None:
     if len(hex_pairs) == 6:
         return ":".join(part.lower() for part in hex_pairs)
     return None
+
+
+
+def _optional_number(value: Any) -> float | None:
+    """Return a numeric SNMP scalar, ignoring unsupported-object sentinels."""
+    if value is None or isinstance(value, (NoSuchInstance, NoSuchObject, EndOfMibView)):
+        return None
+    parsed = parse_int(_pretty(value))
+    return float(parsed) if parsed is not None else None
 
 
 def _model_from_description(description: str) -> str:
@@ -145,7 +162,7 @@ class Gs1900SnmpClient:
     ) -> dict[int, Any]:
         """Walk a numeric OID subtree without invoking PySNMP's MIB loader.
 
-        PySNMP's high-level ``bulk_walk_cmd`` always normalises its initial
+        PySNMP's high-level walk helper always normalises its initial
         varbind through ``CommandGeneratorVarBinds.make_varbinds``. That builds
         a MIB view and performs blocking filesystem reads, even when the caller
         requests ``lookupMib=False``. Home Assistant correctly detects those
@@ -229,6 +246,9 @@ class Gs1900SnmpClient:
                     (OID_SYS_UPTIME, Null("")),
                     (OID_SYS_NAME, Null("")),
                     (OID_BRIDGE_MAC, Null("")),
+                    (OID_PETH_MAIN_PSE_POWER, Null("")),
+                    (OID_PETH_MAIN_PSE_CONSUMPTION, Null("")),
+                    (OID_PETH_MAIN_PSE_THRESHOLD, Null("")),
                     lookupMib=False,
                 )
                 (
@@ -273,6 +293,13 @@ class Gs1900SnmpClient:
         uptime_ticks = parse_int(_pretty(scalar_values.get(OID_SYS_UPTIME, "")))
         uptime_seconds = int(uptime_ticks / 100) if uptime_ticks is not None else None
         mac = _normalise_mac(scalar_values.get(OID_BRIDGE_MAC))
+        poe_budget_w = _optional_number(scalar_values.get(OID_PETH_MAIN_PSE_POWER))
+        poe_consumption_w = _optional_number(
+            scalar_values.get(OID_PETH_MAIN_PSE_CONSUMPTION)
+        )
+        poe_threshold_percent = _optional_number(
+            scalar_values.get(OID_PETH_MAIN_PSE_THRESHOLD)
+        )
 
         indexes: set[int] = set()
         for table in tables.values():
@@ -322,5 +349,8 @@ class Gs1900SnmpClient:
             firmware=_firmware_from_description(description),
             mac=mac,
             uptime_seconds=uptime_seconds,
+            poe_budget_w=poe_budget_w,
+            poe_consumption_w=poe_consumption_w,
+            poe_threshold_percent=poe_threshold_percent,
             ports=ports,
         )

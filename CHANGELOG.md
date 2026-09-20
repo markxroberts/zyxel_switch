@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.4
+
+- Restores stable MAC-based device registry identity, preferring the hardware identity already stored in the config entry, and automatically merges duplicate GS1900 device records created by the 0.2.x identifier change.
+- Reattaches existing entity-registry entries to the retained device before removing the duplicate, preserving entity IDs and history.
+- Restores read-only POWER-ETHERNET-MIB main-PSE scalar polling for GS1900 PoE budget, consumption and threshold.
+- Keeps the 0.2.3 raw numeric OID approach, so PySNMP performs no runtime MIB loading on Home Assistant's event loop.
+- Falls back to the authenticated web PoE page when a main-PSE scalar is unavailable.
+- Fixes a duplicated comprehension in the entity-registry reconciliation helper.
+
 ## 0.2.3
 
 - Fixes Home Assistant blocking-I/O warnings from PySNMP MIB loading on the event loop.

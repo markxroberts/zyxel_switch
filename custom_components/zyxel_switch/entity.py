@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT
+from homeassistant.helpers import device_registry as dr
 from homeassistant.helpers.device_registry import CONNECTION_NETWORK_MAC, DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
@@ -11,6 +12,24 @@ from .const import CONF_USE_HTTPS, DOMAIN, MANUFACTURER
 from .coordinator import ZyxelSwitchCoordinator
 from .models import PortData
 from .runtime_data import ZyxelRuntimeData
+
+
+def _physical_device_id(entry: ConfigEntry, mac: str | None) -> str | None:
+    """Return the stable MAC identity used by 0.1.x device registry entries."""
+    # The config-entry unique ID is the hardware identity captured when the
+    # switch was first configured. Prefer it over a later-discovered MAC so an
+    # integration upgrade cannot silently move the entities to a new device.
+    candidates = (entry.unique_id, mac)
+    for candidate in candidates:
+        if not candidate:
+            continue
+        compact = "".join(char for char in str(candidate) if char.isalnum())
+        if len(compact) != 12 or any(
+            char not in "0123456789abcdefABCDEF" for char in compact
+        ):
+            continue
+        return dr.format_mac(compact)
+    return None
 
 
 class ZyxelCoordinatorEntity(CoordinatorEntity[ZyxelSwitchCoordinator]):
@@ -33,8 +52,16 @@ class ZyxelCoordinatorEntity(CoordinatorEntity[ZyxelSwitchCoordinator]):
     def device_info(self) -> DeviceInfo:
         """Return current device registry information."""
         data = self.coordinator.data
+        physical_id = _physical_device_id(self._entry, data.mac)
         connections = (
-            {(CONNECTION_NETWORK_MAC, data.mac)} if data.mac else set()
+            {(CONNECTION_NETWORK_MAC, physical_id)}
+            if physical_id is not None
+            else set()
+        )
+        identifiers = (
+            {(DOMAIN, physical_id)}
+            if physical_id is not None
+            else {(DOMAIN, self._entry.entry_id)}
         )
         host = str(self._entry.data[CONF_HOST])
         display_host = (
@@ -42,7 +69,7 @@ class ZyxelCoordinatorEntity(CoordinatorEntity[ZyxelSwitchCoordinator]):
         )
         scheme = "https" if self._entry.data.get(CONF_USE_HTTPS) else "http"
         return DeviceInfo(
-            identifiers={(DOMAIN, self._entry.entry_id)},
+            identifiers=identifiers,
             connections=connections,
             manufacturer=MANUFACTURER,
             model=data.model,

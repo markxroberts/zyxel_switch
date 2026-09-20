@@ -618,9 +618,19 @@ class Gs1900Client(_BaseZyxelWebClient):
             mac=snmp.mac,
             firmware=snmp.firmware,
             uptime_seconds=snmp.uptime_seconds,
-            poe_consumption_w=page.consumption_w,
-            poe_budget_w=page.budget_w,
-            poe_threshold_percent=page.threshold_percent,
+            poe_consumption_w=(
+                snmp.poe_consumption_w
+                if snmp.poe_consumption_w is not None
+                else page.consumption_w
+            ),
+            poe_budget_w=(
+                snmp.poe_budget_w if snmp.poe_budget_w is not None else page.budget_w
+            ),
+            poe_threshold_percent=(
+                snmp.poe_threshold_percent
+                if snmp.poe_threshold_percent is not None
+                else page.threshold_percent
+            ),
             ports=ports,
         )
         self._last_data = data
